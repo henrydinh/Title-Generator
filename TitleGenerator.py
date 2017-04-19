@@ -10,7 +10,7 @@ import copy
 import math
 
 
-# Gets the tokens in a string. Ignores punctuation except for apostrophes and hyphens
+# Gets the tokens in a string and strips end punctuation
 def tokenize(phrase):
 	words = []
 	for line in phrase.split("\n"):
@@ -27,6 +27,28 @@ def printMatrix(table):
 	print	
 
 
+# Gets the dot product between two vectors
+def dot(vector1, vector2):
+	if len(vector1) != len(vector2):
+		return 0.0
+	return sum(i[0] * i[1] for i in zip(vector1, vector2))
+	
+
+# Gets the magnitude of a vector (double bars)	
+def magnitude(vector):
+	return math.sqrt(sum(i**2 for i in vector))
+	
+
+# Returns a similarity matrix based on Cosine Similarity
+def similarityMatrix(matrix):
+	similarity_matrix = [[0] * len(matrix) for i in range(len(matrix))]
+	for i in range(len(similarity_matrix)):
+		for j in range(len(similarity_matrix[i])):
+			similarity_matrix[i][j] = round(1.0 * dot(matrix[i], matrix[j]) / (magnitude(matrix[i]) * magnitude(matrix[j])), 5)
+	return similarity_matrix
+	
+
+# Make sure user provides an article
 if len(sys.argv) != 2:
 	print "Usage: python TitleGenerator.py <article-name>"
 	sys.exit()
@@ -52,7 +74,9 @@ word_counts = copy.deepcopy(inverse_words)
 word_counts = dict.fromkeys(word_counts, 0)
 
 # Separate the article into sentences
-sentences = dict(list(enumerate(list(set(nltk.sent_tokenize(article))))))
+sentences = dict(list(enumerate(nltk.sent_tokenize(article))))
+for i in sentences:
+	sentences[i] = sentences[i].replace('\n', ' ')
 print "Sentences: "
 print sentences
 print
@@ -101,11 +125,13 @@ print "Normalized matrix: "
 printMatrix(matrix)
 print
 
+# Construct Cosine Similarity Matrix with the normalized tf-idf matrix
+similarity_matrix = similarityMatrix(matrix)
+print "Similarity Matrix: "
+printMatrix(similarity_matrix)
+print
 
-
-
-
-
+# Use PageRank algorithm to score the sentences in the graph
 
 
 
