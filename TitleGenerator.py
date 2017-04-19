@@ -57,7 +57,7 @@ def pageRank(damper, matrix, iterations):
 		for j in range(len(matrix[i])):
 			probability[i][j] = 0.0 if i == j else matrix[i][j] / total
 	# 0.0 initial score for each sentence
-	page_rank = [0.0] * len(matrix)
+	page_rank = [0] * len(matrix)
 	# start walking at a random node
 	start_node = random.randint(0, len(page_rank) - 1)
 	iteration = 0
@@ -76,8 +76,13 @@ def pageRank(damper, matrix, iterations):
 			# start a new walk at a random node. Only increase iteration when a new walk is started
 			iteration += 1
 			start_node = random.randint(0, len(page_rank) - 1)
-			page_rank[start_node] += 1
+			#page_rank[start_node] += 1
 	return page_rank
+	
+
+# prints the title formatted
+def printTitle(title):
+	print string.capwords(title.strip(string.punctuation))
 	
 
 # Make sure user provides an article
@@ -139,10 +144,8 @@ page_rank = pageRank(.85, matrix, 1000)
 # Get the best ranked sentence and use it as the title
 best = 0
 for i in range(len(page_rank)):
-	best = i if page_rank[i] >= best else best
+	if page_rank[i] >= best:
+		best = i
 title = sentences[best]
-print title
-print
-
-
+printTitle(title)
 
