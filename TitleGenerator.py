@@ -8,6 +8,7 @@ import nltk
 import string
 import copy
 import math
+import random
 
 
 # Gets the tokens in a string and strips end punctuation
@@ -47,6 +48,37 @@ def similarityMatrix(matrix):
 			similarity_matrix[i][j] = round(1.0 * dot(matrix[i], matrix[j]) / (magnitude(matrix[i]) * magnitude(matrix[j])), 5)
 	return similarity_matrix
 	
+	
+def pageRank(damper, matrix, iterations):
+	# Get probability of going from a node to its neighbor based on matrix
+	probability = copy.deepcopy(matrix)
+	for i in range(len(matrix)):
+		total = sum(x if x != i else 0.0 for x in range(len(matrix[i])))
+		for j in range(len(matrix[i])):
+			probability[i][j] = 0.0 if i == j else matrix[i][j] / total
+	# 0.0 initial score for each sentence
+	page_rank = [0.0] * len(matrix)
+	# start walking at a random node
+	start_node = random.randint(0, len(page_rank) - 1)
+	iteration = 0
+	while iteration < iterations:
+		rand = random.uniform(0.0, 1.0)
+		if rand <= damper:
+			# go to neighbor node randomly based on probability
+			prob = random.uniform(0.0, 1.0)
+			for i in range(len(page_rank)):
+				prob -= probability[start_node][i]
+				if prob <= 0:
+					start_node = i
+					break
+			page_rank[start_node] += 1
+		else:
+			# start a new walk at a random node. Only increase iteration when a new walk is started
+			iteration += 1
+			start_node = random.randint(0, len(page_rank) - 1)
+			page_rank[start_node] += 1
+	return page_rank
+	
 
 # Make sure user provides an article
 if len(sys.argv) != 2:
@@ -55,19 +87,10 @@ if len(sys.argv) != 2:
 	
 # Get the article
 article = open(sys.argv[1], 'r').read()
-print "Article: "
-print article
-print
 
 # Get unique tokens in article ignoring punctuation. inverse_words is word : index
 words = dict(list(enumerate(list(set(tokenize(article))))))
 inverse_words = {y:x for x,y in words.iteritems()}
-print "Words: "
-print words
-print
-print "Inverse words: "
-print inverse_words
-print
 
 # get the unigram counts of all words
 word_counts = copy.deepcopy(inverse_words)
@@ -77,15 +100,9 @@ word_counts = dict.fromkeys(word_counts, 0)
 sentences = dict(list(enumerate(nltk.sent_tokenize(article))))
 for i in sentences:
 	sentences[i] = sentences[i].replace('\n', ' ')
-print "Sentences: "
-print sentences
-print
 
 # Get words in each sentence. keep duplicates for counting later
 sentence_words = dict(list(enumerate([tokenize(sentences[s]) for s in sentences])))
-print "Words in sentences as a list: "
-print sentence_words
-print
 
 # Build matrix of words and count times it appears in each sentence
 # Row is the sentence #. Column is the word #
@@ -94,12 +111,6 @@ for s in sentence_words:
 	for word in sentence_words[s]:
 		matrix[s][inverse_words[word]] += 1
 		word_counts[word] += 1
-print "Matrix: "
-printMatrix(matrix)
-print
-print "Word counts: "
-print word_counts
-print
 
 # counts the number of sentences a word appears in
 word_sent_count = copy.deepcopy(inverse_words)
@@ -109,10 +120,7 @@ for j in range(len(matrix[0])):
 	for i in range(len(matrix)):
 		if matrix[i][j] > 0:
 			count += 1
-	word_sent_count[words[j]] = count
-print "Number of documents each word appears in: "			
-print word_sent_count
-print		
+	word_sent_count[words[j]] = count	
 
 # Normalize the matrix with term frequency (tf) and inverse doc frequency (idf)
 for i in range(len(matrix)):
@@ -121,21 +129,20 @@ for i in range(len(matrix)):
 		idf = math.log(1.0 * len(sentences) / (1 + word_sent_count[words[j]]))
 		tf_idf = round(tf * idf, 5)
 		matrix[i][j] = tf_idf
-print "Normalized matrix: "
-printMatrix(matrix)
-print
 
 # Construct Cosine Similarity Matrix with the normalized tf-idf matrix
 similarity_matrix = similarityMatrix(matrix)
-print "Similarity Matrix: "
-printMatrix(similarity_matrix)
-print
 
 # Use PageRank algorithm to score the sentences in the graph
+page_rank = pageRank(.85, matrix, 1000)
 
-
-
-
+# Get the best ranked sentence and use it as the title
+best = 0
+for i in range(len(page_rank)):
+	best = i if page_rank[i] >= best else best
+title = sentences[best]
+print title
+print
 
 
 
