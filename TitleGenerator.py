@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 # Henry Dinh - HXD130130@UTDallas.edu
 # Title Generator
 # Takes in an article and outputs a relevant title
 
 
+from unidecode import unidecode
 import sys
 import nltk
 import string
@@ -49,7 +51,7 @@ def similarityMatrix(matrix):
 	return similarity_matrix
 	
 	
-def pageRank(damper, matrix, iterations):
+def textRank(damper, matrix, iterations):
 	# Get probability of going from a node to its neighbor based on matrix
 	probability = copy.deepcopy(matrix)
 	for i in range(len(matrix)):
@@ -85,13 +87,21 @@ def printTitle(title):
 	print string.capwords(title.strip(string.punctuation))
 	
 
+# replaces uncommon unicode characters	
+def cleanText(text):
+	text = text.replace('“','"').replace('”','"').replace('–','-').replace('’','\'')
+	return text
+	
+
 # Make sure user provides an article
 if len(sys.argv) != 2:
 	print "Usage: python TitleGenerator.py <article-name>"
 	sys.exit()
+
 	
-# Get the article
+# Get the article and clean it
 article = open(sys.argv[1], 'r').read()
+article = cleanText(article)
 
 # Get unique tokens in article ignoring punctuation. inverse_words is word : index
 words = dict(list(enumerate(list(set(tokenize(article))))))
@@ -138,13 +148,13 @@ for i in range(len(matrix)):
 # Construct Cosine Similarity Matrix with the normalized tf-idf matrix
 similarity_matrix = similarityMatrix(matrix)
 
-# Use PageRank algorithm to score the sentences in the graph
-page_rank = pageRank(.85, matrix, 1000)
+# Use TextRank algorithm to score the sentences in the graph
+text_rank = textRank(.85, matrix, 1000)
 
 # Get the best ranked sentence and use it as the title
 best = 0
-for i in range(len(page_rank)):
-	if page_rank[i] >= best:
+for i in range(len(text_rank)):
+	if text_rank[i] >= best:
 		best = i
 title = sentences[best]
 printTitle(title)
