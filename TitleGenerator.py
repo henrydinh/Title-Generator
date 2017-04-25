@@ -83,25 +83,34 @@ def textRank(damper, matrix, iterations):
 	
 
 # prints the title formatted
-def printTitle(title):
-	print string.capwords(title.strip(string.punctuation))
+def getTitle(title):
+	return string.capwords(title.strip(string.punctuation))
 	
 
 # replaces uncommon unicode characters	
 def cleanText(text):
-	text = text.replace('“','"').replace('”','"').replace('–','-').replace('’','\'')
+	text = text.replace('“','"').replace('”','"').replace('–','-').replace('’','\'').replace('—','-')
+	text = text.replace('’', '\'')
 	return text
+	
+
+# Gets the average character length of sentences in the article
+def averageSentenceLength(sentences):
+	sum = 0
+	for i in range(len(sentences)):
+		sum += len(sentences[i])
+	return int(sum / len(sentences))
 	
 
 # Make sure user provides an article
 if len(sys.argv) != 2:
 	print "Usage: python TitleGenerator.py <article-name>"
 	sys.exit()
-
 	
 # Get the article and clean it
 article = open(sys.argv[1], 'r').read()
 article = cleanText(article)
+#print article
 
 # Get unique tokens in article ignoring punctuation. inverse_words is word : index
 words = dict(list(enumerate(list(set(tokenize(article))))))
@@ -151,11 +160,25 @@ similarity_matrix = similarityMatrix(matrix)
 # Use TextRank algorithm to score the sentences in the graph
 text_rank = textRank(.85, matrix, 1000)
 
-# Get the best ranked sentence and use it as the title
+# Get the best ranked sentence and use it as the title and limit to average sentence characters length
+avg_sent_length = averageSentenceLength(sentences)
+print "Average sentence length: " + str(avg_sent_length)
 best = 0
-for i in range(len(text_rank)):
-	if text_rank[i] >= best:
-		best = i
-title = sentences[best]
-printTitle(title)
+none_shorter = 1
+while best < len(sentences) and len(sentences[best]) > avg_sent_length:
+	best += 1
+if best >= len(sentences):
+	best = 0
+else:
+	none_shorter = 0
+if none_shorter:
+	# No sentence shorter than avg_sent_length, jsut pick the best sentence
+	for i in range(len(text_rank)):
+		if text_rank[i] >= best:
+			best = i
+else:
+	for i in range(len(text_rank)):
+		if text_rank[i] >= best and len(sentences[i]) <= avg_sent_length:
+			best = i
+print "Title: " + getTitle(sentences[best])
 
