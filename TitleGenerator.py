@@ -4,7 +4,6 @@
 # Takes in an article and outputs a relevant title
 
 
-from unidecode import unidecode
 import sys
 import nltk
 import string
